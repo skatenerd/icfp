@@ -80,6 +80,11 @@
            [:rock :rock :rock :rock]
            [:wall :wall :wall :wall]]]
       (should= end-state (update beginning-state))))
+
+  (it "wont let a rock fall off the bottom"
+    (let [beginning-state
+          [[:rock]]]
+      (should= beginning-state (update beginning-state))))
 )
 
 (describe "move update"
@@ -100,6 +105,12 @@
           [[:empty :empty]
            [:robot :empty]]]
       (should= end-state (update-for-move beginning-state :down))))
+
+  (it "wont let you walk off the end"
+    (let [beginning-state
+          [[:robot :empty]
+           [:earth :empty]]]
+      (should= beginning-state (update-for-move beginning-state :left))))
 
 
           

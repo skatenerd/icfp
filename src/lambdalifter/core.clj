@@ -154,12 +154,20 @@
 (defn new-robot-location [old-location direction]
   ((direction-to-update-function direction) old-location))
 
+(defn valid-move? [old-location new-location state]
+  (let [new-location-contents (get-in state new-location)]
+    (or
+      (= :earth new-location-contents)
+      (= :empty new-location-contents))))
+
 (defn update-for-move [state direction]
   (let [old-location (robot-location state)
-        new-location (new-robot-location old-location direction)
-        with-robot-in-new-place (assoc-in state new-location :robot)
-        with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
-  with-robot-gone))
+        new-location (new-robot-location old-location direction)]
+    (if (valid-move? old-location new-location state)
+      (let [with-robot-in-new-place (assoc-in state new-location :robot)
+            with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
+      with-robot-gone)
+      state)))
 
 (defn update [state]
   (reduce 
