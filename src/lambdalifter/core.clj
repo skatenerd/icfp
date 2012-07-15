@@ -1,5 +1,5 @@
 (ns lambdalifter.core)
-(declare char-to-map parse-row pad-nils)
+(declare char-to-map parse-row pad-empties)
 
 (defn -main
   "I don't do a whole lot."
@@ -14,14 +14,14 @@
 
 (defn parse-row [row-string min-length]
   (let [splitted (rest (clojure.string/split row-string #""))]
-    (pad-nils (map char-to-map splitted) min-length)))
+    (pad-empties (map char-to-map splitted) min-length)))
 
-(defn pad-nils [v len]
-  (let [num-nils (- len (count v))
-        nil-vec (repeat num-nils nil)]
-    (if (empty? nil-vec)
+(defn pad-empties [v len]
+  (let [num-empties (- len (count v))
+        empties-vec (repeat num-empties :empty)]
+    (if (empty? empties-vec)
       v
-      (apply conj (vec v) nil-vec))))
+      (apply conj (vec v) empties-vec))))
 
 (defn coord-above [coordinate]
   (let [[y x] coordinate]
