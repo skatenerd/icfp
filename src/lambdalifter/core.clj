@@ -160,13 +160,16 @@
       (= :earth new-location-contents)
       (= :empty new-location-contents))))
 
+(defn swap-robot [old-location new-location state]
+  (let [with-robot-in-new-place (assoc-in state new-location :robot)
+        with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
+  with-robot-gone))
+
 (defn update-for-move [state direction]
   (let [old-location (robot-location state)
         new-location (new-robot-location old-location direction)]
     (if (valid-move? old-location new-location state)
-      (let [with-robot-in-new-place (assoc-in state new-location :robot)
-            with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
-      with-robot-gone)
+      (swap-robot old-location new-location state)
       state)))
 
 (defn update [state]
