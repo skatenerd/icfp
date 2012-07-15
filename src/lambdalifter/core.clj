@@ -64,8 +64,8 @@
   (or (rock-below? state coordinate)
       (lambda-below? state coordinate)))
 
-(defn nil-below? [state coordinate]
-  (nil? (get-in state (coord-below coordinate))))
+(defn empty-below? [state coordinate]
+  (= :empty (get-in state (coord-below coordinate))))
 
 (defn rock-in? [state coordinate]
   (= :rock (get-in state coordinate)))
@@ -82,7 +82,7 @@
 
 (defn any-occupied-in [state coordinates]
   (let [looked-up-vals (map #(get-in state %) coordinates)]
-    (not (not-any? #(not (nil? %)) looked-up-vals))))
+    (not (not-any? #(not (= :empty %)) looked-up-vals))))
 
 (defn right-or-below-right-occupied [state coordinate]
   (any-occupied-in
@@ -97,7 +97,7 @@
 (defn rock-falls-into [state coordinate]
   (let [val-in (get-in state coordinate)]
     (and
-      (nil-below? state coordinate)
+      (empty-below? state coordinate)
       (= val-in :rock))))
 
 (defn rock-falls-to-right [state coordinate]
@@ -114,19 +114,19 @@
     (right-or-below-right-occupied state coordinate)))
 
 (defn update-for-right-fall [state coordinate]
-  (let [with-nil-in (assoc-in state coordinate nil)
-        with-rock-below-right (assoc-in with-nil-in (coord-below-right coordinate) :rock)]
+  (let [with-empty-in (assoc-in state coordinate :empty)
+        with-rock-below-right (assoc-in with-empty-in (coord-below-right coordinate) :rock)]
     with-rock-below-right))
 
 (defn update-for-left-fall [state coordinate]
-  (let [with-nil-in (assoc-in state coordinate nil)
-        with-rock-below-left (assoc-in with-nil-in (coord-below-left coordinate) :rock)]
+  (let [with-empty-in (assoc-in state coordinate :empty)
+        with-rock-below-left (assoc-in with-empty-in (coord-below-left coordinate) :rock)]
     with-rock-below-left))
 
 (defn update-for-down-fall [state coordinate]
   (let [with-rock-below (assoc-in state (coord-below coordinate) :rock)
-        with-nil-in (assoc-in with-rock-below coordinate nil)]
-    with-nil-in))
+        with-empty-in (assoc-in with-rock-below coordinate :empty)]
+    with-empty-in))
 
 (defn update-for-coord [original-state state coordinate]
   (cond 
@@ -158,7 +158,7 @@
   (let [old-location (robot-location state)
         new-location (new-robot-location old-location direction)
         with-robot-in-new-place (assoc-in state new-location :robot)
-        with-robot-gone (assoc-in with-robot-in-new-place old-location nil)]
+        with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
   with-robot-gone))
 
 (defn update [state]
@@ -174,5 +174,5 @@
    "*" :rock
    "L" :lift
    "R" :robot
-   " " nil})
+   " " :empty})
   
