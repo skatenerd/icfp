@@ -1,10 +1,10 @@
 # lambdalifter
 
-A Clojure library designed to ... well, that part is up to you.
+This will eventually be a solution to the programming contest for the 2012 ICFP.
 
 ## Usage
 
-FIXME
+Nothing useful yet
 
 ## License
 
