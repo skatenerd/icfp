@@ -1,6 +1,16 @@
 (ns lambdalifter.core)
 (declare char-to-map parse-row pad-empties)
 
+
+(def _ :empty)
+(def W :wall)
+(def R :rock)
+(def L :lambda)
+(def E :earth)
+(def l :lift)
+(def o :open-lift)
+(def r :robot)
+
 (defn -main
   "I don't do a whole lot."
   [& args]
@@ -128,6 +138,13 @@
         with-empty-in (assoc-in with-rock-below coordinate :empty)]
     with-empty-in))
 
+(defn lift-opens [state coord]
+  (and (not-any? #(= % :lambda) (flatten state))
+       (= (get-in state coord) :lift)))
+
+(defn open-lift [original-state coordinate]
+  (assoc-in original-state coordinate :open-lift))
+
 (defn update-for-coord [original-state state coordinate]
   (cond 
     (rock-falls-into original-state coordinate)
@@ -136,6 +153,8 @@
     (update-for-right-fall state coordinate)
     (rock-falls-to-left original-state coordinate)
     (update-for-left-fall state coordinate)
+    (lift-opens original-state coordinate)
+    (open-lift original-state coordinate)
     :else
     state))
 
@@ -154,23 +173,32 @@
 (defn new-robot-location [old-location direction]
   ((direction-to-update-function direction) old-location))
 
-(defn valid-move? [old-location new-location state]
-  (let [new-location-contents (get-in state new-location)]
-    (or
-      (= :earth new-location-contents)
-      (= :empty new-location-contents))))
-
 (defn swap-robot [old-location new-location state]
   (let [with-robot-in-new-place (assoc-in state new-location :robot)
         with-robot-gone (assoc-in with-robot-in-new-place old-location :empty)]
   with-robot-gone))
 
-(defn update-for-move [state direction]
+(defn swap-for-move [state direction]
   (let [old-location (robot-location state)
         new-location (new-robot-location old-location direction)]
-    (if (valid-move? old-location new-location state)
-      (swap-robot old-location new-location state)
-      state)))
+      (swap-robot old-location new-location state)))
+
+(defmulti update-for-move (fn [state direction]
+                           (let [robot-coord (robot-location state)
+                                 new-location (new-robot-location robot-coord direction)
+                                 object-at-location (get-in state new-location)]
+                            object-at-location)))
+
+(defmethod update-for-move E [state direction]
+  (swap-for-move state direction))
+(defmethod update-for-move _ [state direction]
+  (swap-for-move state direction))
+(defmethod update-for-move L [state direction]
+  (swap-for-move state direction))
+(defmethod update-for-move l [state direction]
+  (swap-for-move state direction))
+(defmethod update-for-move :default [state direction]
+  state)
 
 (defn update [state]
   (reduce 
@@ -186,4 +214,37 @@
    "L" :lift
    "R" :robot
    " " :empty})
-  
+
+(defn robot-beneath-rock? [state]
+  (let [location (robot-location state)]
+    (rock-above? state location)))
+
+(defn turn-killed-robot [before after]
+  (and (not (robot-beneath-rock? before))
+            (robot-beneath-rock? after)))
+
+(defn robot-entered-lift [before after]
+  (let [location (robot-location after)]
+    (= (get-in before location) :lift)))
+
+(defn get-metadata [original-state after-move after-update]
+  (let [death (turn-killed-robot after-move after-update)
+        victory (robot-entered-lift original-state after-move)]
+    {:dead death
+     :won victory}))
+
+(defn update-for-turn [state direction]
+  (let [state-after-robot-move (update-for-move state direction)
+        state-after-map-update (update state-after-robot-move)
+        metadata (get-metadata state state-after-robot-move state-after-map-update)]    (with-meta state-after-map-update metadata)))
+
+(defn update-for-turn-if-not-dead [state direction]
+  (if (or
+        (:dead (meta state))
+        (:won (meta state)))
+    state
+    (update-for-turn state direction)))
+
+(defn update-for-turns [map-state directions]
+  (let [state (with-meta map-state {:dead false})]
+    (reduce update-for-turn-if-not-dead state directions)))
