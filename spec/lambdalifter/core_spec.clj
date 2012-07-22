@@ -2,6 +2,9 @@
   (:use [speclj.core]
         [lambdalifter.core]))
 
+(defmacro board-test [before after function]
+  `(should= (~function ~before) ~after))
+
 (describe "IO"
   (it "parses the input string into a grid"
     (let [input (slurp "spec/support/map_4.map")
@@ -28,76 +31,70 @@
 
 (describe "World update"
   (it "updates for downward fall"
-    (let [beginning-state
-          [[_ _ R _ _]
-           [_ _ _ _ _]
-           [W W W W W]]
-          end-state
-          [[_ _ _ _ _]
-           [_ _ R _ _]
-           [W W W W W]]]
-      (should= end-state (update beginning-state))))
+    (board-test
+      [[_ _ R _ _]
+       [_ _ _ _ _]
+       [W W W W W]]
+      [[_ _ _ _ _]
+       [_ _ R _ _]
+       [W W W W W]]
+      update))
+
   (it "updates for right fall"
-    (let [beginning-state
-          [[_ _ R _ _]
-           [_ _ R _ _]
-           [W W W W W]]
-          end-state
-          [[_ _ _ _ _]
-           [_ _ R R _]
-           [W W W W W]]]
-      (should= end-state (update beginning-state))))
+    (board-test
+      [[_ _ R _ _]
+       [_ _ R _ _]
+       [W W W W W]]
+      [[_ _ _ _ _]
+       [_ _ R R _]
+       [W W W W W]]
+      update))
 
   (it "updates for left fall"
-    (let [beginning-state
-          [[_ _ R _ _]
-           [_ _ R R _]
-           [W W W W W]]
-          end-state
-          [[_ _ _ _ _]
-           [_ R R R _]
-           [W W W W W]]]
-      (should= end-state (update beginning-state))))
+    (board-test
+      [[_ _ R _ _]
+       [_ _ R R _]
+       [W W W W W]]
+      [[_ _ _ _ _]
+       [_ R R R _]
+       [W W W W W]]
+      update))
 
   (it "updates for lambda fall"
-    (let [beginning-state
-          [[_ _ R _ _]
-           [_ _ L _ _]
-           [W W W W W]]
-          end-state
-          [[_ _ _ _ _]
-           [_ _ L R _]
-           [W W W W W]]]
-      (should= end-state (update beginning-state))))
+    (board-test
+      [[_ _ R _ _]
+       [_ _ L _ _]
+       [W W W W W]]
+      [[_ _ _ _ _]
+       [_ _ L R _]
+       [W W W W W]]
+      update))
 
   (it "allows rocks to collide"
-    (let [beginning-state
-          [[R _ R _]
-           [R _ R R]
-           [W W W W]]
-          end-state
-          [[_ _ _ _]
-           [R R R R]
-           [W W W W]]]
-      (should= end-state (update beginning-state))))
+    (board-test
+      [[R _ R _]
+       [R _ R R]
+       [W W W W]]
+      [[_ _ _ _]
+       [R R R R]
+       [W W W W]]
+      update))
 
   (it "turns closed lifts to open lifts"
-      (let [beginning-state
-            [[l _]
-             [_ _]]
-            end-state
-            [[o _]
-             [_ _]]]
-        (should= end-state (update beginning-state))))
+    (board-test
+      [[l _]
+       [_ _]]
+      [[o _]
+       [_ _]]
+      update))
 
   (it "keeps closed lifts closed"
-      (let [beginning-state
-            [[l L]
-             [_ _]]
-            end-state
-            [[l L]
-             [_ _]]]
-        (should= end-state (update beginning-state))))
+    (board-test
+      [[l L]
+       [_ _]]
+      [[l L]
+       [_ _]]
+      update))
 
   (it "wont let a rock fall off the bottom"
     (let [beginning-state
